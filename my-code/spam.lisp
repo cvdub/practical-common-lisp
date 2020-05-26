@@ -8,10 +8,12 @@
   (classification (score (extract-features text))))
 
 (defun classification (score)
-  (cond
-    ((<= score *max-ham-score*) 'ham)
-    ((>= score *min-spam-score*) 'spam)
-    (t 'unsure)))
+  (values
+   (cond
+     ((<= score *max-ham-score*) 'ham)
+     ((>= score *min-spam-score*) 'spam)
+     (t 'unsure))
+   score))
 
 (defclass word-feature ()
   ((word
@@ -119,3 +121,61 @@
          for prob = (exp (- m)) then (* prob (/ m i))
          summing prob)
    1.0))
+
+(defun add-file-to-corpus (filename type corpus)
+  (vector-push-extend (list filename type) corpus))
+
+(defparameter *corpus* (make-array 1000 :adjustable t :fill-pointer 0))
+
+(defun add-directory-to-corpus (dir type corpus)
+  (dolist (filename (list-directory dir))
+    (add-file-to-corpus filename type corpus)))
+
+(defun test-classifier (corpus tetsing-fraction)
+  (clear-database)
+  (let* ((shuffled (shuffle-vector corpus))
+         (size (length corpus))
+         (train-on (floor (* size (- 1 testing-fraction)))))
+    (train-from-corpus shuffled :start 0 :end train-on)
+    (test-from-corpus shuffled :start train-on)))
+
+(defparameter *max-chars* (* 10 1024))
+
+(defun train-from-corpus (corpus &key (start 0) end)
+  (loop for idx from start below (or end (length corpus)) do
+    (destructuring-bind (file type) (aref corpus idx)
+      (train (start-of-file file *max-chars*) type))))
+
+(defun test-from-corpus (corpus &key (start 0) end)
+  (loop for idx from start below (or end (length corpus))
+        collect
+        (destructuring-bind (file type) (aref corpus idx)
+          (multiple-value-bind (classification score)
+              (classify (start-of-file file *max-chars*))
+            (list
+             :file file
+             :type type
+             :classification classification
+             :score score)))))
+
+(defun nshuffle-vector (vector)
+  (loop for idx downfrom (1- (length vector)) to 1
+        for other = (random (1+ idx))
+        do (unless (= idx other)
+             (rotatef (aref vector idx) (aref vector other))))
+  vector)
+
+(defun shuffle-vector (vector)
+  (nshuffle-vector (copy-seq vector)))
+
+(defun start-of-file (file max-chars)
+  (with-open-file (in file)
+    (let* ((length (min (file-length in) max-chars))
+           (text (make-string length))
+           (read (read-sequence text in)))
+      (if (< read length)
+          (subseq text 0 read)
+          text))))
+
+
+
