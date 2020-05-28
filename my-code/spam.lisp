@@ -131,7 +131,7 @@
   (dolist (filename (list-directory dir))
     (add-file-to-corpus filename type corpus)))
 
-(defun test-classifier (corpus tetsing-fraction)
+(defun test-classifier (corpus testing-fraction)
   (clear-database)
   (let* ((shuffled (shuffle-vector corpus))
          (size (length corpus))
@@ -177,5 +177,73 @@
           (subseq text 0 read)
           text))))
 
+(defun result-type (result)
+  (destructuring-bind (&key type classification &allow-other-keys) result
+    (ecase type
+      (ham
+       (ecase classification
+         (ham 'correct)
+         (spam 'false-positive)
+         (unsure 'missed-ham)))
+      (spam
+       (ecase classification
+         (ham 'false-negative)
+         (spam 'correct)
+         (unsure 'missed-spam))))))
+
+(defun false-positive-p (result)
+  (eql (result-type result) 'false-positive))
+
+(defun false-negative-p (result)
+  (eql (result-type result) 'false-negative))
+
+(defun missed-ham-p (result)
+  (eql (result-type result) 'missed-ham))
+
+(defun missed-spam-p (result)
+  (eql (result-type result) 'missed-spam))
+
+(defun correct-p (result)
+  (eql (result-type result) 'correct))
+
+(defun analyze-results (results)
+  (let* ((keys '(total correct false-positive
+                 false-negative missed-ham missed-spam))
+         (counts (loop for x in keys collect (cons x 0))))
+    (dolist (item results)
+      (incf (cdr (assoc 'total counts)))
+      (incf (cdr (assoc (result-type item) counts))))
+    (loop with total = (cdr (assoc 'total counts))
+          for (label . count) in counts
+          do (format t "~&~@(~a~):~20t~5d~,5t: ~6,2f%~%"
+                     label count (* 100 (/ count total))))))
+
+(defun explain-classification (file)
+  (let* ((text (start-of-file file *max-chars*))
+         (features (extract-features text))
+         (score (score features))
+         (classification (classification score)))
+    (show-summary file text classification score)
+    (dolist (feature (sorted-interesting features))
+      (show-feature feature))))
+
+(defun show-summary (file text classification score)
+  (format t "~&~a" file)
+  (format t "~2%~a~2%" text)
+  (format t "Classified as ~a with a score of ~,5f~%" classification score))
+
+(defun show-feature (feature)
+  (with-slots (word ham-count spam-count) feature
+    (format
+     t "~&~2t~a~30thams: ~5d; spams: ~5d;~,10tprob: ~,f~%"
+     word ham-count spam-count (bayesian-spam-probability feature))))
+
+(defun sorted-interesting (features)
+  (sort (remove-if #'untrained-p features) #'< :key #'bayesian-spam-probability))
+
+(defun explain-results (results)
+  (dolist (item results)
+    (destructuring-bind (&key file &allow-other-keys) item
+      (explain-classification file))))
 
 
