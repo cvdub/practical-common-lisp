@@ -12,6 +12,3 @@
    :walk-directory
    :directory-p
    :file-p))
-
-(defpackage :net.cvdub.spam
-  (:use :common-lisp :net.cvdub.pathnames))

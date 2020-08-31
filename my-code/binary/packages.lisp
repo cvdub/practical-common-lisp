@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :net.cvdub.binary
-  (:use :common-lisp :com.gigamonkeys.macro-utilities)
+  (:use :common-lisp :net.cvdub.macro-utilities)
   (:export
    :define-binary-class
    :define-tagged-binary-class

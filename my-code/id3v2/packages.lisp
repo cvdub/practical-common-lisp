@@ -1,6 +1,6 @@
 (defpackage :net.cvdub.id3v2
   (:use :common-lisp
-   :net.cvdub.pathnames
+        :net.cvdub.pathnames
         :net.cvdub.binary)
   (:export
    :read-id3
