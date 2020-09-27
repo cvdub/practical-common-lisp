@@ -1,3 +1,13 @@
+;;; Local Variables:
+;;; eval: (font-lock-add-keywords 'lisp-mode '(("(\\(define-binary-type\\)\\s +\\(\\(\\w\\|\\s_\\)+\\)"  (1 font-lock-keyword-face) (2 font-lock-function-name-face))))
+;;; eval: (font-lock-add-keywords 'lisp-mode '(("(\\(define-binary-class\\)\\s +\\(\\(\\w\\|\\s_\\)+\\)"  (1 font-lock-keyword-face) (2 font-lock-function-name-face))))
+;;; eval: (font-lock-add-keywords 'lisp-mode '(("(\\(define-tagged-binary-class\\)\\s +\\(\\(\\w\\|\\s_\\)+\\)"  (1 font-lock-keyword-face) (2 font-lock-function-name-face))))
+;;; eval:  (put 'define-binary-type 'common-lisp-indent-function '(6 4 &rest (&whole 2 &rest 2)))
+;;; eval:  (put 'define-binary-class 'common-lisp-indent-function (get 'defclass 'common-lisp-indent-function))
+;;; eval:  (put 'define-tagged-binary-class 'common-lisp-indent-function (get 'defclass 'common-lisp-indent-function))
+;;; eval:  (put 'walk-mp3s 'common-lisp-indent-function (get 'with-output-to-string 'common-lisp-indent-function))
+;;; End:
+
 (in-package :net.cvdub.id3v2)
 
 (define-binary-type unsigned-integer (bytes bits-per-byte)
